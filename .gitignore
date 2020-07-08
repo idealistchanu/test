@@ -1,0 +1,10 @@
+/.gradle/
+/.idea/
+/build/
+/out/
+/rest/
+
+/src/main/resources/application-local.yml
+
+HELP.md
+user-management.iml

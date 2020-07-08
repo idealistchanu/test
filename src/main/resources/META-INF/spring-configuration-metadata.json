@@ -1,0 +1,30 @@
+{
+  "properties": [
+    {
+      "name": "aws.region",
+      "type": "java.lang.String",
+      "description": "AWS 지역(Region) 정보.",
+      "defaultValue": "ap-northeast-2"
+    },
+    {
+      "name": "aws.accessKeyId",
+      "type": "java.lang.String",
+      "description": "AWS 접근 계정 accessKeyId."
+    },
+    {
+      "name": "aws.secretAccessKey",
+      "type": "java.lang.String",
+      "description": "AWS 접근 계정 secretAccessKey."
+    },
+    {
+      "name": "aws.cognito.userPoolId",
+      "type": "java.lang.String",
+      "description": "AWS Cognito의 userPoolId."
+    },
+    {
+      "name": "aws.cognito.webclient.clientId",
+      "type": "java.lang.String",
+      "description": "AWS Cognito의 클라이언트 식별 정보."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+#!/bin/bash
+APP_NAME=$(basename ./*.jar)
+APP_PID=$(pgrep -f .jar)
+if [[ -n $APP_PID ]]; then
+  echo "Stop process pid $APP_PID of $APP_NAME"
+  kill -9 "$APP_PID"
+fi

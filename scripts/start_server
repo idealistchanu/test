@@ -1,0 +1,11 @@
+#!/bin/bash
+APPLICATION_JAR_NAME=user-management-0.0.1-SNAPSHOT.jar
+ACTIVE_PROFILE=development
+SERVER_PORT=8010
+
+## move working environment
+cd /home/ec2-user/build
+pwd
+
+echo "> $APPLICATION_JAR_NAME deploy"
+nohup java -jar -Dspring.profiles.active=$ACTIVE_PROFILE -Dserver.port=$SERVER_PORT $APPLICATION_JAR_NAME > /dev/null 2> /dev/null < /dev/null &
