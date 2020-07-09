@@ -1,27 +1,26 @@
 version: 0.2
+
 phases:
-  install:
-    runtime-versions:
-      java: corretto11
   pre_build:
     commands:
-      - echo Nothing to do in the pre_build phase...
-      - chmod +x gradlew
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      - IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"
+      - echo IMAGE_URI=${IMAGE_URI}
   build:
     commands:
       - echo Build started on `date`
+      - echo Execute gradle build task...
+      - chmod +x ./gradlew
       - ./gradlew bootJar -x test
+      - echo Building the Docker image... SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - docker build --build-arg SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $IMAGE_URI
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo $(basename ./build/libs/*.jar)
-      - pwd
+      - echo Pushing the Docker image... IMAGE_URI=${IMAGE_URI}
+      - docker push $IMAGE_URI
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$ECS_CLUSTER_NAME" "$IMAGE_URI" > images.json
 artifacts:
-  files:
-    - scripts/*
-    - appspec.yml
-    - build/libs/*.jar
-  discard-paths: yes
-cache:
-  paths:
-    - '/root/.gradle/caches/**/*'
+  files: images.json
