@@ -18,8 +18,12 @@ class UserResourceConverter {
 
     User converts(UserResource resource) {
         return User.builder()
+                .email(resource.getEmail())
+                .name(resource.getName())
+                .password(resource.getPassword())
                 .nickname(resource.getNickname())
                 .address(resource.getAddress())
+                .status(resource.getStatus())
                 .build();
     }
 }
