@@ -1,3 +1,6 @@
+server:
+  port: 8010
+
 aws:
   region: ap-northeast-2
   accessKeyId: AKIA3G2RCBQUJTXV2XX4
