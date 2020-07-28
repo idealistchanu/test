@@ -20,7 +20,7 @@ class AuthenticationController {
     private final TokenResourceConverter tokenResourceConverter;
 
     @PostMapping("/login")
-    public Mono<TokenResource> login(@RequestBody @Valid LoginRequest loginRequest) {
+    public Mono<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
         log.info("email: {}", loginRequest.getEmail());
 
         User user = User.builder()
@@ -39,8 +39,8 @@ class AuthenticationController {
     }
 
     @PostMapping("/token/refresh")
-    public Mono<TokenResource> refreshToken(@RequestBody TokenResource tokenResource) {
-        return userService.refreshToken(tokenResource.getRefreshToken())
+    public Mono<TokenResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return userService.refreshToken(refreshTokenRequest.getRefreshToken())
             .map(tokenResourceConverter::converts);
     }
 }

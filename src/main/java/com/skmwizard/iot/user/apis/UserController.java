@@ -1,9 +1,7 @@
 package com.skmwizard.iot.user.apis;
 
 import com.skmwizard.iot.user.services.ChangePassword;
-import com.skmwizard.iot.user.services.User;
 import com.skmwizard.iot.user.services.UserService;
-import io.undertow.util.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,7 +10,6 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.CognitoIdentityProviderException;
 
 import javax.validation.Valid;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +19,7 @@ class UserController {
     private final UserResourceConverter userResourceConverter;
 
     @GetMapping("/me")
-    public Mono<UserResource> getUserInfo(@RequestHeader("Authorization") String authorization) {
+    public Mono<UserResponse> getUserInfo(@RequestHeader("Authorization") String authorization) {
         return userService.getUserInfo(this.extractAccessToken(authorization))
             .onErrorMap(error -> CognitoIdentityProviderException.builder().build())
             .map(userResourceConverter::converts);
@@ -30,14 +27,14 @@ class UserController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<Void> register(@RequestBody @Valid UserResource userResource) {
-        return userService.signUp(userResourceConverter.converts(userResource));
+    public Mono<Void> register(@RequestBody @Valid UserRequest userRequest) {
+        return userService.signUp(userResourceConverter.converts(userRequest));
     }
 
     @PutMapping("/me")
-    public Mono<UserResource> editUserInfo(@RequestHeader("Authorization") String authorization, @RequestBody UserResource userResource) {
-        log.info("userResource: {}", userResource);
-        return userService.updateUserInfo(this.extractAccessToken(authorization), userResourceConverter.converts(userResource))
+    public Mono<UserResponse> editUserInfo(@RequestHeader("Authorization") String authorization, @RequestBody UserRequest userRequest) {
+        log.info("userResource: {}", userRequest);
+        return userService.updateUserInfo(this.extractAccessToken(authorization), userResourceConverter.converts(userRequest))
             .map(userResourceConverter::converts);
     }
 

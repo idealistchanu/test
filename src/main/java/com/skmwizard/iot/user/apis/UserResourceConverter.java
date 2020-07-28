@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 class UserResourceConverter {
-    UserResource converts(User user) {
-        UserResource resource = new UserResource();
+    UserResponse converts(User user) {
+        UserResponse resource = new UserResponse();
         resource.setEmail(user.getEmail());
         resource.setName(user.getName());
         resource.setNickname(user.getNickname());
@@ -16,7 +16,7 @@ class UserResourceConverter {
         return resource;
     }
 
-    User converts(UserResource resource) {
+    User converts(UserResponse resource) {
         return User.builder()
                 .email(resource.getEmail())
                 .name(resource.getName())
@@ -25,5 +25,16 @@ class UserResourceConverter {
                 .address(resource.getAddress())
                 .status(resource.getStatus())
                 .build();
+    }
+
+    User converts(UserRequest resource) {
+        return User.builder()
+            .email(resource.getEmail())
+            .name(resource.getName())
+            .password(resource.getPassword())
+            .nickname(resource.getNickname())
+            .address(resource.getAddress())
+            .status(resource.getStatus())
+            .build();
     }
 }

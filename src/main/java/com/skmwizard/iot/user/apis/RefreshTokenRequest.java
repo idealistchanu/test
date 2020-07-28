@@ -7,10 +7,6 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-class TokenResource {
-    private String idToken;
-    private String accessToken;
+class RefreshTokenRequest {
     private String refreshToken;
-    private Integer expiresIn;
-    private String tokenType;
 }

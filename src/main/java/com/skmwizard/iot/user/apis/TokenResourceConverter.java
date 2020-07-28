@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 class TokenResourceConverter {
-    TokenResource converts(Token token) {
-        TokenResource resource = new TokenResource();
+    TokenResponse converts(Token token) {
+        TokenResponse resource = new TokenResponse();
         resource.setIdToken(token.getIdToken());
         resource.setAccessToken(token.getAccessToken());
         resource.setRefreshToken(token.getRefreshToken());
