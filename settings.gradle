@@ -1,1 +1,13 @@
+pluginManagement {
+    repositories {
+        maven {
+            credentials {
+                username "skmwizard"
+                password "skmwizard2020!"
+            }
+            url "http://15.164.80.186:8081/repository/maven-public"
+        }
+        gradlePluginPortal()
+    }
+}
 rootProject.name = 'user-management'

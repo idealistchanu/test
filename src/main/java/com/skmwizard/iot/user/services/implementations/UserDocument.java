@@ -17,5 +17,7 @@ class UserDocument {
     @Id
     private String email;
 
-    private String nickname;
+    private String name;
+
+    private String phoneNumber;
 }

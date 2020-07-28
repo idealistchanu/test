@@ -43,12 +43,6 @@ class AmazonUserConverter {
         if (user.getName() != null && !user.getName().isEmpty()) {
             attributeTypes.add(AttributeType.builder().name("name").value(user.getName()).build());
         }
-        if (user.getNickname() != null && !user.getNickname().isEmpty()) {
-            attributeTypes.add(AttributeType.builder().name("custom:nickname").value(user.getNickname()).build());
-        }
-        if (user.getAddress() != null && !user.getAddress().isEmpty()) {
-            attributeTypes.add(AttributeType.builder().name("custom:address").value(user.getAddress()).build());
-        }
 
         return attributeTypes;
     }

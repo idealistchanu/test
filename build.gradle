@@ -1,12 +1,15 @@
 plugins {
-    id "org.springframework.boot" version "2.1.8.RELEASE"
+    id "org.springframework.boot" version "2.3.2.RELEASE"
     id "io.spring.dependency-management" version "1.0.8.RELEASE"
     id "java"
 }
 
 group = "com.skmwizard.iot"
 version = "0.0.1-SNAPSHOT"
-sourceCompatibility = "11"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+}
 
 configurations {
     compileOnly {
@@ -15,29 +18,33 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
-    maven { url "http://15.164.80.186:8081/repository/maven-central" }
+    maven {
+        credentials {
+            username "skmwizard"
+            password "skmwizard2020!"
+        }
+        url "http://15.164.80.186:8081/repository/maven-public"
+    }
 }
 
 ext {
 //    set("springBootAdminVersion", "2.1.5")
 //    set("springCloudVersion", "Greenwich.SR2")
-    set("awsSDKVersion", "2.13.51")
+    awsSDKVersion = "2.13.61"
 }
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude group: "org.springframework.boot", module: "spring-boot-starter-tomcat"
     }
     implementation("org.springframework.boot:spring-boot-starter-undertow")
 //    implementation("de.codecentric:spring-boot-admin-starter-client")
 //    implementation("org.springframework.cloud:spring-cloud-starter-config")
-//    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
 //    implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
     implementation platform("software.amazon.awssdk:bom:${awsSDKVersion}")
     implementation("software.amazon.awssdk:cognitoidentityprovider")
-    implementation("software.amazon.awssdk:apache-client")
     implementation("software.amazon.awssdk:netty-nio-client")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
