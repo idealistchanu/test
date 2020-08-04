@@ -23,7 +23,7 @@ POST http://localhost:8010/login
 Content-Type: application/json
 
 {
-  "email": "ingu@test.com",
+  "email": "ingu2@test.com",
   "password": "qwer1234!!"
 }
 
@@ -80,3 +80,7 @@ grant_type=refresh_token&
 client_id=
 refresh_token=REFRESH_TOKEN
 
+###
+https://dev-api.skmwizard.com/me
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}

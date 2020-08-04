@@ -12,7 +12,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.CognitoIdentityProviderException;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.io.IOException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,12 +27,18 @@ class AccountController {
     private final AgreeReceiveResourceConverter agreeReceiveConverter;
 
     @GetMapping("/me")
-    public Mono<UserResponse> getUserInfo(@RequestHeader HttpHeaders httpHeaders) {
+    public Mono<UserResponse> getUserInfo(@RequestHeader HttpHeaders httpHeaders, HttpServletRequest request) {
         debuggingHeader(httpHeaders);
-        return null;
-        //return userService.getUserInfo(this.extractAccessToken(authorization))
-        //    .onErrorMap(error -> CognitoIdentityProviderException.builder().build())
-        //    .map(userResourceConverter::converts);
+        try {
+            String body = request.getReader().lines().collect(Collectors.joining());
+            log.info("request : {}", body);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String authorization = httpHeaders.getFirst("Authorization");
+        return userService.getUserInfo(this.extractAccessToken(authorization == null ? "" : authorization))
+            .onErrorMap(error -> CognitoIdentityProviderException.builder().build())
+            .map(userResourceConverter::converts);
     }
 
     @PostMapping("/signup")
