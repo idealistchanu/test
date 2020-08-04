@@ -4,10 +4,10 @@ import com.skmwizard.iot.user.services.ChangePassword;
 import com.skmwizard.iot.user.services.Token;
 import com.skmwizard.iot.user.services.User;
 import com.skmwizard.iot.user.services.UserService;
-import io.undertow.util.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderAsyncClient;
@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Primary
 @Slf4j
-class AmazonUserService implements UserService {
+class DefaultAmazonUserService implements UserService {
     private final CognitoIdentityProviderAsyncClient providerClient;
     private final AmazonUserConverter converter;
     private final UserConverter userConverter;
@@ -29,7 +29,7 @@ class AmazonUserService implements UserService {
     private final String clientId;
     private final String userPoolId;
 
-    public AmazonUserService(
+    public DefaultAmazonUserService(
         CognitoIdentityProviderAsyncClient providerClient,
         AmazonUserConverter converter,
         UserConverter userConverter,
@@ -45,27 +45,39 @@ class AmazonUserService implements UserService {
     }
 
     @Override
-    public Mono<Void> signUp(User user) {
+    public Mono<Void> exists(String email) {
+        return userRepository.existsById(email).flatMap(exists -> {
+            if(exists.equals(Boolean.TRUE)) {
+                return Mono.error(() -> new DuplicateKeyException(email));
+            }
+            return Mono.empty();
+        });
+    }
 
-        return Mono.just(providerClient.signUp(
-            SignUpRequest.builder()
-                .clientId(clientId)
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .userAttributes(converter.converts(user))
-                .build())
-            .whenComplete((response, throwable) -> {
+    @Override
+    public Mono<Void> signUp(User user) {
+        return Mono.just(
+            providerClient.signUp(
+                SignUpRequest.builder()
+                    .clientId(clientId)
+                    .username(user.getEmail())
+                    .password(user.getPassword())
+                    .userAttributes(converter.converts(user))
+                    .build()
+            ).whenComplete((response, throwable) -> {
+                if (response == null) log.error(throwable.getMessage());
                 Mono.when(
+                    // 사용자 가입 상태를 확인된 상태로 변경 - 관리자 권한
                     Mono.just(providerClient.adminConfirmSignUp(
                         AdminConfirmSignUpRequest.builder()
                             .username(user.getEmail())
                             .userPoolId(userPoolId)
                             .build()).join()),
-                    userRepository.save(
-                        new UserDocument(user.getEmail(), user.getName(), user.getPhoneNumber())
-                    )).subscribe();
-
-            }).join()).then();
+                    // 사용자 정보 DB에 저장
+                    userRepository.save(new UserDocument(user.getEmail(), user.getName(), user.getPhoneNumber()))
+                ).subscribe();
+            }).join()
+        ).then();
     }
 
     @Override
@@ -83,18 +95,17 @@ class AmazonUserService implements UserService {
             providerClient.globalSignOut(
                 GlobalSignOutRequest.builder()
                     .accessToken(accessToken)
-                    .build())
-                .join())
-            .then();
+                    .build()
+            ).join()
+        ).then();
     }
 
     @Override
     public Mono<User> getUserInfo(String accessToken) {
         log.info("getUserInfo {}", accessToken);
         return userInfo(accessToken)
-            .flatMap(user ->
-                userRepository.findById(user.getEmail())
-                    .map(userConverter::converts));
+            .flatMap(user -> userRepository.findById(user.getEmail()))
+            .map(userConverter::converts);
     }
 
     @Override
@@ -110,17 +121,10 @@ class AmazonUserService implements UserService {
                         .orElseThrow(NoSuchElementException::new)
                 )
                 .build()
-            ).whenComplete((updateUserAttributesResponse, throwable) -> {
-
-            }).join()),
+            ).join()),
             userRepository.findById(user.getEmail())
                 .switchIfEmpty(Mono.error(new NoSuchElementException(user.getEmail())))
-                .map(exists -> {
-                    if (exists.equals(Boolean.TRUE)) {
-                        Mono.error(() -> new BadRequestException(user.getEmail()));
-                    }
-                    return userRepository.save(userConverter.converts(user)).subscribe();
-                }))
+                .map(userDocument -> userRepository.save(userConverter.converts(user))))
             .flatMap(aVoid -> userRepository.findById(user.getEmail()).map(userConverter::converts));
     }
 
@@ -132,9 +136,23 @@ class AmazonUserService implements UserService {
                     .accessToken(accessToken)
                     .previousPassword(changePassword.getOldPassword())
                     .proposedPassword(changePassword.getNewPassword())
-                    .build())
-                .join())
-            .then();
+                    .build()
+            ).join()
+        ).then();
+    }
+
+    public Mono<Void> resetPasswordByAdministrator(String email, ChangePassword changePassword) {
+        // DB에 cognito username 을 저장해서 가져와야함
+
+        return Mono.just(
+            providerClient.adminSetUserPassword(
+                AdminSetUserPasswordRequest.builder()
+                    .username(email)
+                    .userPoolId(userPoolId)
+                    .password(changePassword.getNewPassword())
+                    .build()
+            ).join()
+        ).then();
     }
 
     @Override
@@ -153,21 +171,45 @@ class AmazonUserService implements UserService {
      * @return 토큰
      */
     private Mono<Token> initiateAuth(Map<String, String> authParameters, AuthFlowType authFlowType) {
-        return Mono.just(providerClient.initiateAuth(
-            InitiateAuthRequest.builder()
-                .clientId(clientId)
-                .authParameters(authParameters)
-                .authFlow(authFlowType)
-                .build())
-            .whenComplete((initiateAuthResponse, throwable) -> {
-                log.info(initiateAuthResponse.authenticationResult().toString());
-            }).join().authenticationResult()).map(converter::converts);
+        return Mono.just(
+            providerClient.initiateAuth(
+                InitiateAuthRequest.builder()
+                    .clientId(clientId)
+                    .authParameters(authParameters)
+                    .authFlow(authFlowType)
+                    .build()
+            ).whenComplete((response, throwable) -> {
+                if (response == null) log.error(throwable.getMessage());
+            }).join().authenticationResult()
+        ).map(converter::converts);
     }
 
+    private Mono<Token> adminInitiateAuth(Map<String, String> authParameters) {
+        return Mono.just(
+          providerClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
+              .authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
+              .authParameters(authParameters)
+              .clientId(clientId)
+              .userPoolId(userPoolId)
+              .build()
+          ).whenComplete((response, throwable) -> {
+              if (response == null) log.error(throwable.getMessage());
+          }).join().authenticationResult()
+        ).map(converter::converts);
+    }
+
+    /**
+     * 사용자 정보 요청
+     *
+     * @param accessToken 토큰
+     * @return 사용자 정보
+     */
     private Mono<User> userInfo(String accessToken) {
-        return Mono.just(providerClient.getUser(GetUserRequest.builder()
-            .accessToken(accessToken)
-            .build()).join())
-            .map(response -> converter.converts(response.userAttributes()));
+        return Mono.just(
+            providerClient.getUser(
+                GetUserRequest.builder()
+                    .accessToken(accessToken)
+                    .build()).join()
+        ).map(response -> converter.converts(response.userAttributes()));
     }
 }

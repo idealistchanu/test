@@ -3,6 +3,14 @@ package com.skmwizard.iot.user.services;
 import reactor.core.publisher.Mono;
 
 public interface UserService {
+
+    /**
+     * 사용자 존재 여부
+     *
+     * @param email 이메일
+     */
+    Mono<Void> exists(String email);
+
     /**
      * 사용자 회원가입
      *
@@ -22,9 +30,9 @@ public interface UserService {
     /**
      * 사용자 로그아웃
      *
-     * @param accessToken 접근 토큰
+     * @param email 이메일
      */
-    Mono<Void> logout(String accessToken);
+    Mono<Void> logout(String email);
 
     /**
      * 사용자 정보 가져오기

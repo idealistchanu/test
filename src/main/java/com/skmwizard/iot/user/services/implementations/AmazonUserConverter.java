@@ -21,12 +21,6 @@ class AmazonUserConverter {
                 case "email":
                     userBuilder.email(attributeType.value());
                     break;
-                case "custom:nickname":
-                    userBuilder.nickname(attributeType.value());
-                    break;
-                case "custom:address":
-                    userBuilder.address(attributeType.value());
-                    break;
                 default:
             }
         }

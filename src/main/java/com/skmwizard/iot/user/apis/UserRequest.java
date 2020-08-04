@@ -7,9 +7,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,22 +20,20 @@ import javax.validation.constraints.Pattern;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class UserRequest {
-    @NotNull
-    @NotEmpty
+    @NotBlank(message = "이메일을 입력하세요")
     @Pattern(regexp = "^[a-z0-9._%+-]+@[a-z0-9]+.[a-z]{2,6}$", flags = Pattern.Flag.CASE_INSENSITIVE)
     private String email;
 
-    @NotNull
-    @NotEmpty
+    @NotBlank(message = "이름을 입력하세요")
     private String name;
 
-    @NotNull
-    @NotEmpty
+    @NotBlank(message = "비밀번호을 입력하세요")
     private String password;
 
-    private String nickname;
+    @NotBlank(message = "휴대폰 번호을 입력하세요")
+    private String phoneNumber;
 
-    private String address;
+    private Set<String> agreeList;
 
     private String status;
 }
