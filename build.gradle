@@ -31,21 +31,20 @@ ext {
 //    set("springBootAdminVersion", "2.1.5")
 //    set("springCloudVersion", "Greenwich.SR2")
     awsSDKVersion = "2.13.61"
+    springdocVersion = "1.4.3"
 }
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-web") {
-        exclude group: "org.springframework.boot", module: "spring-boot-starter-tomcat"
-    }
-    implementation("org.springframework.boot:spring-boot-starter-undertow")
 //    implementation("de.codecentric:spring-boot-admin-starter-client")
 //    implementation("org.springframework.cloud:spring-cloud-starter-config")
 //    implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
     implementation platform("software.amazon.awssdk:bom:${awsSDKVersion}")
     implementation("software.amazon.awssdk:cognitoidentityprovider")
     implementation("software.amazon.awssdk:netty-nio-client")
+    implementation("org.springdoc:springdoc-openapi-webflux-ui:${springdocVersion}")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

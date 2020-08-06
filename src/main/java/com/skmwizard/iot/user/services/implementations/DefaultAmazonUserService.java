@@ -4,7 +4,6 @@ import com.skmwizard.iot.user.services.ChangePassword;
 import com.skmwizard.iot.user.services.Token;
 import com.skmwizard.iot.user.services.User;
 import com.skmwizard.iot.user.services.UserService;
-import io.undertow.util.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -14,6 +13,7 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderAsyncClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
+import java.rmi.NoSuchObjectException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -49,7 +49,7 @@ class DefaultAmazonUserService implements UserService {
     @Override
     public Mono<User> find(String username, String phoneNumber) {
         return userRepository.findByNameAndAndPhoneNumber(username, phoneNumber)
-            .switchIfEmpty(Mono.error(new BadRequestException(phoneNumber)))
+            .switchIfEmpty(Mono.error(new NoSuchObjectException(phoneNumber)))
             .map(userConverter::converts);
     }
 
@@ -103,12 +103,12 @@ class DefaultAmazonUserService implements UserService {
 
     @Override
     public Mono<Void> logout(String accessToken) {
-        return Mono.just(
+        return Mono.fromFuture(
             providerClient.globalSignOut(
                 GlobalSignOutRequest.builder()
                     .accessToken(accessToken)
                     .build()
-            ).join()
+            )
         ).then();
     }
 
@@ -148,7 +148,7 @@ class DefaultAmazonUserService implements UserService {
     }
 
     @Override
-    public Mono<Void> resetPassword(String accessToken, ChangePassword changePassword) {
+    public Mono<Void> changePassword(String accessToken, ChangePassword changePassword) {
         return Mono.just(
             providerClient.changePassword(
                 ChangePasswordRequest.builder()
@@ -161,10 +161,10 @@ class DefaultAmazonUserService implements UserService {
     }
 
     @Override
-    public Mono<Void> changePassword(String email, ChangePassword changePassword) {
+    public Mono<Void> resetPassword(String email, String resetPassword) {
         Map<String, String> auth = new ConcurrentHashMap<>();
         auth.put("USERNAME", email);
-        auth.put("NEW_PASSWORD", changePassword.getNewPassword());
+        auth.put("NEW_PASSWORD", resetPassword);
 
         return Mono.fromFuture(
             providerClient.adminSetUserPassword(
@@ -172,15 +172,14 @@ class DefaultAmazonUserService implements UserService {
                     .userPoolId(userPoolId)
                     .username(email)
                     .permanent(true)
-                    .password(changePassword.getNewPassword())
+                    .password(resetPassword)
                     .build()
-            ).whenComplete((response, throwable) -> {
+            ).whenComplete((response, throwable) ->
                 providerClient.respondToAuthChallenge(RespondToAuthChallengeRequest.builder()
                     .challengeName(ChallengeNameType.NEW_PASSWORD_REQUIRED)
                     .clientId(clientId)
                     .challengeResponses(auth)
-                    .build());
-            })
+                    .build()))
         ).then();
     }
 
@@ -213,20 +212,6 @@ class DefaultAmazonUserService implements UserService {
         ).map(converter::converts);
     }
 
-    private Mono<Token> adminInitiateAuth(Map<String, String> authParameters) {
-        return Mono.just(
-            providerClient.adminInitiateAuth(AdminInitiateAuthRequest.builder()
-                .authFlow(AuthFlowType.ADMIN_USER_PASSWORD_AUTH)
-                .authParameters(authParameters)
-                .clientId(clientId)
-                .userPoolId(userPoolId)
-                .build()
-            ).whenComplete((response, throwable) -> {
-                if (response == null) log.error(throwable.getMessage());
-            }).join().authenticationResult()
-        ).map(converter::converts);
-    }
-
     /**
      * 사용자 정보 요청
      *
@@ -234,11 +219,12 @@ class DefaultAmazonUserService implements UserService {
      * @return 사용자 정보
      */
     private Mono<User> userInfo(String accessToken) {
-        return Mono.fromFuture(
-            providerClient.getUser(
-                GetUserRequest.builder()
-                    .accessToken(accessToken)
-                    .build())
-        ).map(response -> converter.converts(response.userAttributes()));
+        return Mono
+            .fromFuture(
+                providerClient.getUser(
+                    GetUserRequest.builder()
+                        .accessToken(accessToken)
+                        .build()))
+            .map(response -> converter.converts(response.userAttributes()));
     }
 }

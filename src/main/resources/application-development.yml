@@ -23,3 +23,9 @@ spring:
       password: Admin1234!#
       database: user
       authentication-database: admin
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /user/api-docs

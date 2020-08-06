@@ -2,13 +2,13 @@ package com.skmwizard.iot.user.services.implementations;
 
 import com.skmwizard.iot.user.services.Verification;
 import com.skmwizard.iot.user.services.VerificationService;
-import io.undertow.util.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
+import java.rmi.NoSuchObjectException;
 import java.time.LocalDateTime;
 
 /**
@@ -35,7 +35,7 @@ class DefaultVerificationService implements VerificationService {
     @Override
     public Mono<Boolean> exists(Verification verification) {
         return repository.findByCheckerAndVerificationCode(verification.getChecker(), verification.getVerificationCode())
-            .switchIfEmpty(Mono.error(new BadRequestException("인증번호를 확인해주세요.")))
+            .switchIfEmpty(Mono.error(new NoSuchObjectException("인증번호를 확인해주세요.")))
             .doOnSuccess(saved -> log.info("[exists] Verification : {} exist.", saved.getChecker()))
             .map(document -> Boolean.TRUE);
     }

@@ -74,14 +74,14 @@ public interface UserService {
      * @param accessToken    접근 토큰
      * @param changePassword 변경할 비밀번호 정보
      */
-    Mono<Void> resetPassword(String accessToken, ChangePassword changePassword);
+    Mono<Void> changePassword(String accessToken, ChangePassword changePassword);
 
     /**
-     * 비밀번호 변경하기
+     * 비밀번호 재설정하기
      * @param email 이메일
-     * @param changePassword 변경할 비밀번호 정보
+     * @param resetPassword 새로운 비밀번호
      */
-    Mono<Void> changePassword(String email, ChangePassword changePassword);
+    Mono<Void> resetPassword(String email, String resetPassword);
 
     /**
      * Expired Token 을 갱신하여 Token 가져오기

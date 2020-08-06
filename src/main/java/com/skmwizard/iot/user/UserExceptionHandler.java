@@ -1,6 +1,5 @@
 package com.skmwizard.iot.user;
 
-import io.undertow.util.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -16,6 +15,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.NotAuthoriz
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UserNotFoundException;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.UsernameExistsException;
 
+import java.rmi.NoSuchObjectException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -53,9 +53,9 @@ public class UserExceptionHandler {
         return makeResponse(HttpStatus.CONFLICT, exception.getMessage() + " already exist.");
     }
 
-    @ExceptionHandler(BadRequestException.class)
+    @ExceptionHandler(NoSuchObjectException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ExceptionResponse handleBadRequestException(BadRequestException exception) {
+    public ExceptionResponse handleBadRequestException(NoSuchObjectException exception) {
         return makeResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 

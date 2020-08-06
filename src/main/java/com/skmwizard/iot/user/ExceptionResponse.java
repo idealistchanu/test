@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-class ExceptionResponse {
+public class ExceptionResponse {
     private int statusCode;
     private String message;
     private String cause;

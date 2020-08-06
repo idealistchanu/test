@@ -3,6 +3,7 @@ package com.skmwizard.iot.user;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -12,6 +13,7 @@ import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityPr
  * @author ingu_ko
  * @since 2020-07-28
  */
+@Primary
 @Configuration
 public class AWSConfiguration {
 
