@@ -14,15 +14,6 @@ class UserResourceConverter {
         return resource;
     }
 
-    User converts(UserResponse resource) {
-        return User.builder()
-            .email(resource.getEmail())
-            .name(resource.getName())
-            .phoneNumber(resource.getPhoneNumber())
-            .status(resource.getStatus())
-            .build();
-    }
-
     User converts(UserRequest resource) {
         return User.builder()
             .email(resource.getEmail())

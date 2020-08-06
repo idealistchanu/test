@@ -8,6 +8,5 @@ import reactor.core.publisher.Mono;
  * @since 2020-06-11
  */
 public interface VerificationRepository extends ReactiveMongoRepository<VerificationDocument, String> {
-    Mono<VerificationDocument> findByUsername(String username);
-    Mono<Void> deleteByUsername(String username);
+    Mono<VerificationDocument> findByCheckerAndVerificationCode(String phoneNumber, String verificationCode);
 }

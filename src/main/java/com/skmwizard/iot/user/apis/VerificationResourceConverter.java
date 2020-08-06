@@ -13,20 +13,10 @@ import javax.validation.constraints.NotNull;
 @Component
 @Validated
 class VerificationResourceConverter {
-
-    Verification converts(@NotNull VerificationResource resource) {
-        return Verification.builder()
-            .phoneNumber(resource.getPhoneNumber())
-            .verificationCode(resource.getVerificationCode())
-            .build();
-    }
-
-    VerificationResource converts(@NotNull Verification verification) {
-        VerificationResource resource = new VerificationResource();
-        resource.setPhoneNumber(verification.getPhoneNumber());
+    VerificationResponse converts(@NotNull Verification verification) {
+        VerificationResponse resource = new VerificationResponse();
+        resource.setChecker(verification.getChecker());
         resource.setVerificationCode(verification.getVerificationCode());
-        resource.setUsername(verification.getUserName());
-
         return resource;
     }
 }

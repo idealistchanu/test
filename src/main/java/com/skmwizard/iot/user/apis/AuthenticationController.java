@@ -17,17 +17,18 @@ import javax.validation.Valid;
 @Slf4j
 class AuthenticationController {
     private final UserService userService;
-    private final TokenResourceConverter tokenResourceConverter;
+    private final TokenResourceConverter converter;
 
     @PostMapping("/login")
     public Mono<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
         log.info("email: {}", loginRequest.getEmail());
-        return userService.login(
-            User.builder()
-                .email(loginRequest.getEmail())
-                .password(loginRequest.getPassword())
-                .build()
-        ).map(tokenResourceConverter::converts);
+        return userService
+            .login(
+                User.builder()
+                    .email(loginRequest.getEmail())
+                    .password(loginRequest.getPassword())
+                    .build())
+            .map(converter::converts);
     }
 
     @PostMapping("/logout")
@@ -38,8 +39,9 @@ class AuthenticationController {
 
     @PostMapping("/token/refresh")
     public Mono<TokenResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) {
-        return userService.refreshToken(
-            refreshTokenRequest.getRefreshToken()
-        ).map(tokenResourceConverter::converts);
+        return userService
+            .refreshToken(
+                refreshTokenRequest.getRefreshToken())
+            .map(converter::converts);
     }
 }

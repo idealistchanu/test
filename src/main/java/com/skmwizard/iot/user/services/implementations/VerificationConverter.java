@@ -5,8 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
 
 /**
  * @author jongduck_yoon
@@ -16,23 +14,18 @@ import java.time.LocalDateTime;
 @Validated
 class VerificationConverter {
     Verification converts(@NotNull VerificationDocument document) {
-
         return Verification.builder()
-            .phoneNumber(document.getPhoneNumber())
+            .checker(document.getChecker())
             .verificationCode(document.getVerificationCode())
+            .createdDatetime(document.getCreatedDatetime())
             .build();
     }
 
-    VerificationDocument converts(@NotNull Verification verification) {
-        SecureRandom random = new SecureRandom();
-        int num = random.nextInt(100000);
-        String verificationCode = String.format("%05d", num);
-
+    VerificationDocument converts(Verification verification) {
         VerificationDocument document = new VerificationDocument();
-        document.setUsername(verification.getUserName());
-        document.setVerificationCode(verificationCode);
-        document.setPhoneNumber(verification.getPhoneNumber());
-        document.setLocalDateTime(LocalDateTime.now());
+        document.setChecker(verification.getChecker());
+        document.setVerificationCode(verification.getVerificationCode());
+        document.setCreatedDatetime(verification.getCreatedDatetime());
         return document;
     }
 }

@@ -2,14 +2,14 @@ package com.skmwizard.iot.user.services.implementations;
 
 import com.skmwizard.iot.user.services.Verification;
 import com.skmwizard.iot.user.services.VerificationService;
+import io.undertow.util.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
-import javax.validation.constraints.NotBlank;
-import java.rmi.NoSuchObjectException;
+import java.time.LocalDateTime;
 
 /**
  * @author jongduck_yoon
@@ -24,23 +24,27 @@ class DefaultVerificationService implements VerificationService {
     private final VerificationConverter converter;
 
     @Override
-    public Mono<Verification> add(@NotBlank String username, Verification verification) {
+    public Mono<Verification> add(Verification verification) {
         VerificationDocument document = converter.converts(verification);
-        document.setUsername(username);
-        return repository.save(document).map(converter::converts)
-                .doOnSuccess(savedVerification -> log.info("[add] Verification : {}", savedVerification.toString()));
+        document.setCreatedDatetime(LocalDateTime.now());
+        return repository.save(document)
+            .doOnSuccess(saved -> log.info("[add] Verification : {} saved", saved.getChecker()))
+            .map(converter::converts);
     }
 
     @Override
-    public Mono<Void> checkVerification(@NotBlank String username, Verification verification) {
-        return repository.findByUsername(username)
-                .switchIfEmpty(Mono.error(new NoSuchObjectException("Username")))
-                .doOnSuccess(document -> {
-                    repository.deleteByUsername(username).doOnSuccess(monoVoid -> log.info("[remove] Verification: {} {} removed.", username, verification.toString())).subscribe();
-                    if(!document.getVerificationCode().equals(verification.getVerificationCode())) {
-                        throw new IllegalArgumentException("Verification code is not valid");
-                    }
-                }).then();
-
+    public Mono<Boolean> exists(Verification verification) {
+        return repository.findByCheckerAndVerificationCode(verification.getChecker(), verification.getVerificationCode())
+            .switchIfEmpty(Mono.error(new BadRequestException("인증번호를 확인해주세요.")))
+            .doOnSuccess(saved -> log.info("[exists] Verification : {} exist.", saved.getChecker()))
+            .map(document -> Boolean.TRUE);
     }
+
+    @Override
+    public Mono<Void> remove(Verification verification) {
+        return repository.deleteById(verification.getChecker())
+            .doOnSuccess(aVoid -> log.info("[remove] Verification: {} removed.", verification.getChecker()));
+    }
+
+
 }

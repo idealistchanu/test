@@ -17,14 +17,11 @@ import java.time.LocalDateTime;
 @Getter
 class VerificationDocument {
     @Id
-    private String username;
-
-    @NotBlank
-    private String phoneNumber;
+    private String checker;
 
     @NotBlank
     private String verificationCode;
 
     @NotBlank
-    private LocalDateTime localDateTime;
+    private LocalDateTime createdDatetime;
 }

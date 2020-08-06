@@ -5,6 +5,15 @@ import reactor.core.publisher.Mono;
 public interface UserService {
 
     /**
+     * 사용자 이메일 찾기
+     *
+     * @param username 이름
+     * @param phoneNumber 휴대폰 번호
+     * @return 사용자 정보
+     */
+    Mono<User> find(String username, String phoneNumber);
+
+    /**
      * 사용자 존재 여부
      *
      * @param email 이메일
@@ -43,6 +52,14 @@ public interface UserService {
     Mono<User> getUserInfo(String accessToken);
 
     /**
+     * 사용자 정보 가져오기
+     *
+     * @param username 이름
+     * @return 사용자 정보
+     */
+    Mono<User> get(String username);
+
+    /**
      * 사용자 속성 변경하기
      *
      * @param accessToken 접근 토큰
@@ -58,6 +75,13 @@ public interface UserService {
      * @param changePassword 변경할 비밀번호 정보
      */
     Mono<Void> resetPassword(String accessToken, ChangePassword changePassword);
+
+    /**
+     * 비밀번호 변경하기
+     * @param email 이메일
+     * @param changePassword 변경할 비밀번호 정보
+     */
+    Mono<Void> changePassword(String email, ChangePassword changePassword);
 
     /**
      * Expired Token 을 갱신하여 Token 가져오기

@@ -9,7 +9,9 @@ import javax.validation.constraints.NotBlank;
  * @since 2020-06-11
  */
 public interface VerificationService {
-    Mono<Verification> add(@NotBlank String username, Verification verification);
+    Mono<Verification> add(Verification verification);
 
-    Mono<Void> checkVerification(@NotBlank String username, Verification verification);
+    Mono<Boolean> exists(Verification verification);
+
+    Mono<Void> remove(Verification verification);
 }

@@ -7,6 +7,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+
 
 @Document("user")
 @Setter
@@ -17,7 +19,11 @@ class UserDocument {
     @Id
     private String email;
 
+    private String sub;
+
     private String name;
 
     private String phoneNumber;
+
+    private LocalDateTime createdDatetime;
 }

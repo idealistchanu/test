@@ -19,6 +19,7 @@ public class UserConverter {
     User converts(UserDocument user) {
         return User.builder()
             .email(user.getEmail())
+            .sub(user.getSub())
             .name(user.getName())
             .phoneNumber(user.getPhoneNumber())
             .build();

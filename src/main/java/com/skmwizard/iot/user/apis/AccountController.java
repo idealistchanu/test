@@ -27,15 +27,7 @@ class AccountController {
     private final AgreeReceiveResourceConverter agreeReceiveConverter;
 
     @GetMapping("/me")
-    public Mono<UserResponse> getUserInfo(@RequestHeader HttpHeaders httpHeaders, HttpServletRequest request) {
-        debuggingHeader(httpHeaders);
-        try {
-            String body = request.getReader().lines().collect(Collectors.joining());
-            log.info("request : {}", body);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String authorization = httpHeaders.getFirst("Authorization");
+    public Mono<UserResponse> getUserInfo(@RequestHeader("Authorization") String authorization) {
         return userService.getUserInfo(this.extractAccessToken(authorization == null ? "" : authorization))
             .onErrorMap(error -> CognitoIdentityProviderException.builder().build())
             .map(userResourceConverter::converts);
