@@ -1,7 +1,3 @@
-logging:
-  level:
-    com.skmwizard.iot: debug
-
 server:
   port: 8010
 

@@ -44,7 +44,7 @@ class VerificationController {
         return verificationService
             .add(Verification.builder()
                 .checker(resource.getPhoneNumber())
-                .verificationCode(String.format("%05d", new SecureRandom().nextInt(1000000)))
+                .verificationCode(String.format("%06d", new SecureRandom().nextInt(1000000)))
                 .build())
             //TODO SMS로 발신
             .map(converter::converts);
@@ -63,7 +63,7 @@ class VerificationController {
         return verificationService
             .add(Verification.builder()
                 .checker(resource.getEmail())
-                .verificationCode(String.format("%05d", new SecureRandom().nextInt(1000000)))
+                .verificationCode(String.format("%06d", new SecureRandom().nextInt(1000000)))
                 .build())
             //TODO Email로 발신
             .map(converter::converts);
