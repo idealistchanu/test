@@ -17,7 +17,7 @@ aws:
 spring:
   data:
     mongodb:
-      host: 13.124.131.93
+      host: 3.35.103.177
       port: 27017
       username: administrator
       password: Admin1234!#
