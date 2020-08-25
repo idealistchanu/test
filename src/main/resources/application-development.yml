@@ -1,15 +1,6 @@
 server:
   port: 8010
 
-aws:
-  region: ap-northeast-2
-  accessKeyId: AKIA3G2RCBQUJTXV2XX4
-  secretAccessKey: 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
-  cognito:
-    userPoolId: ap-northeast-2_zI7QoQpeJ
-    webclient:
-      clientId: 15mhttfj4hsqd5oibc2dkcpso9
-
 spring:
   data:
     mongodb:
@@ -19,6 +10,15 @@ spring:
       password: Admin1234!#
       database: user
       authentication-database: admin
+
+aws:
+  region: ap-northeast-2
+  accessKeyId: AKIA3G2RCBQUONBUF6N7
+  secretAccessKey: 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
+  cognito:
+    userPoolId: ap-northeast-2_zI7QoQpeJ
+    webclient:
+      clientId: 15mhttfj4hsqd5oibc2dkcpso9
 
 springdoc:
   swagger-ui:

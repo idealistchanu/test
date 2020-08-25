@@ -5,7 +5,4 @@
 /rest/
 /http/
 
-/src/main/resources/application-local.yml
-
 HELP.md
-user-management.iml
