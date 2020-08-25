@@ -3,10 +3,10 @@ package com.skmwizard.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.exception.SdkServiceException;
@@ -36,9 +36,9 @@ public class UserExceptionHandler {
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ExceptionResponse handleUserNotFoundException(UserNotFoundException exception) {
-        return makeResponse(HttpStatus.NOT_FOUND, exception.getMessage());
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ExceptionResponse handleUserNotFoundException() {
+        return makeResponse(HttpStatus.UNAUTHORIZED, "Incorrect username or password.");
     }
 
     @ExceptionHandler(UsernameExistsException.class)
@@ -65,9 +65,9 @@ public class UserExceptionHandler {
         return makeResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler(WebExchangeBindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ExceptionResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
+    public ExceptionResponse handleMethodArgumentNotValidException(WebExchangeBindException exception) {
         return makeResponse(HttpStatus.BAD_REQUEST, exception.getBindingResult().getAllErrors().get(0).getDefaultMessage());
     }
 

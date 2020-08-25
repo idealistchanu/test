@@ -33,8 +33,7 @@ class AuthenticationController {
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "로그인 성공, Token 정보를 반환한다.",
             content = @Content(schema = @Schema(implementation = TokenResponse.class))),
-        @ApiResponse(responseCode = "401", description = "로그인 실패, 등록되지 않은 이메일이거나, 비밀번호를 잘못 입력하셨습니다."),
-        @ApiResponse(responseCode = "404", description = "로그인 실패, 등록되지 않은 이메일입니다."),
+        @ApiResponse(responseCode = "401", description = "로그인 실패, 등록되지 않은 이메일이거나, 비밀번호를 잘못 입력하셨습니다.")
     })
     @PostMapping("/login")
     public Mono<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
