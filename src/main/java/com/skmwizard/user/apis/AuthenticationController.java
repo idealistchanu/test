@@ -13,10 +13,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
@@ -37,7 +36,7 @@ class AuthenticationController {
     })
     @PostMapping("/login")
     public Mono<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
-        log.info("[POST] /login request {}", loginRequest.getEmail());
+        log.info("[POST] /login email {}", loginRequest.getEmail());
         return userService
             .login(
                 User.builder()
@@ -49,17 +48,17 @@ class AuthenticationController {
 
     @Operation(summary = "로그 아웃", description = "로그 아웃 한다.")
     @Parameters({
-        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID")
+        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID", schema = @Schema(type = "string"), required = true)
     })
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "로그 아웃 성공."),
         @ApiResponse(responseCode = "401", description = "로그 아웃 실패, Access Token을 확인해주세요."),
     })
-    @PostMapping("/logout")
-    public Mono<Void> logout(@RequestHeader("Authorization") String accessToken) {
+    @GetMapping("/logout")
+    public Mono<Void> logout(@AuthenticationPrincipal Jwt jwt) {
+        String username = jwt.getClaimAsString("cognito:username");
         log.info("[POST] /logout");
-        accessToken = accessToken.replace("Bearer ", "");
-        return userService.logout(accessToken);
+        return userService.logout(username);
     }
 
     @Operation(summary = "토큰 갱신", description = "토큰을 갱신한다.")

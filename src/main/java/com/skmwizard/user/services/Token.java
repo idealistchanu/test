@@ -9,8 +9,6 @@ import lombok.ToString;
 @ToString
 public class Token {
 
-    private final String idToken;
-
     private final String accessToken;
     /**
      * 기간이 만료되지 않은 새로 고침 토큰

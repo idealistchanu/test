@@ -97,7 +97,6 @@ class DefaultAgreeReceiveService implements AgreeReceiveService {
             .withIgnoreNullValues()
             .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
             .withIgnorePaths("logo_image_path, created_datetime, updated_datetime, creator_id, updater_id");
-
         return Example.of(converter.converts(parameter), exampleMatcher);
     }
 }

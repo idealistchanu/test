@@ -10,7 +10,6 @@ class UserResourceConverter {
         resource.setEmail(user.getEmail());
         resource.setName(user.getName());
         resource.setPhoneNumber(user.getPhoneNumber());
-        resource.setStatus(user.getStatus());
         return resource;
     }
 
@@ -19,6 +18,14 @@ class UserResourceConverter {
             .email(resource.getEmail())
             .name(resource.getName())
             .password(resource.getPassword())
+            .phoneNumber(resource.getPhoneNumber())
+            .status(resource.getStatus())
+            .build();
+    }
+
+    User converts(UserUpdateRequest resource) {
+        return User.builder()
+            .name(resource.getName())
             .phoneNumber(resource.getPhoneNumber())
             .status(resource.getStatus())
             .build();

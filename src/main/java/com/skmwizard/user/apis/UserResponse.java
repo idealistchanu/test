@@ -8,11 +8,7 @@ import lombok.ToString;
 @Setter
 @ToString
 class UserResponse {
-    private String email;
-
     private String name;
-
+    private String email;
     private String phoneNumber;
-
-    private String status;
 }

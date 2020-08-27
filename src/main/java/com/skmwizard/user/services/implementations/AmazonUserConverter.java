@@ -43,11 +43,10 @@ class AmazonUserConverter {
 
     Token converts(AuthenticationResultType authenticationResultType) {
         return Token.builder()
-                .idToken(authenticationResultType.idToken())
-                .accessToken(authenticationResultType.accessToken())
-                .refreshToken(authenticationResultType.refreshToken())
-                .expiresIn(authenticationResultType.expiresIn())
-                .tokenType(authenticationResultType.tokenType())
-                .build();
+            .accessToken(authenticationResultType.idToken())
+            .refreshToken(authenticationResultType.refreshToken())
+            .expiresIn(authenticationResultType.expiresIn())
+            .tokenType(authenticationResultType.tokenType())
+            .build();
     }
 }

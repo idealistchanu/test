@@ -1,7 +1,7 @@
 package com.skmwizard.user.apis;
 
 import com.skmwizard.user.services.AgreeReceiveService;
-import com.skmwizard.user.services.ChangePassword;
+import com.skmwizard.user.services.User;
 import com.skmwizard.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -55,7 +57,7 @@ class AccountController {
 
     @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회한다.")
     @Parameters({
-        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID")
+        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID", schema = @Schema(type = "string"), required = true)
     })
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "사용자 정보 조회 성공, 사용자 정보를 반환한다.",
@@ -63,14 +65,16 @@ class AccountController {
         @ApiResponse(responseCode = "401", description = "인증 실패, Access Token을 확인해주세요.")
     })
     @GetMapping("/me")
-    public Mono<UserResponse> getUserInfo(@RequestHeader("Authorization") String authorization) {
-        return userService.getUserInfo(this.extractAccessToken(authorization == null ? "" : authorization))
+    public Mono<UserResponse> getUserInfo(@AuthenticationPrincipal Jwt jwt) {
+        String username = jwt.getClaimAsString("email");
+        log.info("username: {}", username);
+        return userService.get(username)
             .map(userResourceConverter::converts);
     }
 
     @Operation(summary = "사용자 정보 수정", description = "사용자 정보를 수정한다.")
     @Parameters({
-        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID")
+        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID", schema = @Schema(type = "string"), required = true)
     })
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "사용자 정보 수정 성공, 사용자 정보가 수정되어 반환한다.",
@@ -79,15 +83,16 @@ class AccountController {
         @ApiResponse(responseCode = "401", description = "인증 실패, Access Token을 확인해주세요.")
     })
     @PutMapping("/me")
-    public Mono<UserResponse> editUserInfo(@RequestHeader("Authorization") String authorization, @RequestBody UserRequest userRequest) {
-        log.info("userResource: {}", userRequest);
-        return userService.updateUserInfo(this.extractAccessToken(authorization), userResourceConverter.converts(userRequest))
+    public Mono<UserResponse> editUserInfo(@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid UserUpdateRequest request) {
+        String username = jwt.getClaimAsString("email");
+        log.info("username: {}, userResource: {}", username, request);
+        return userService.updateUserInfo(username, userResourceConverter.converts(request))
             .map(userResourceConverter::converts);
     }
 
-    @Operation(summary = "사용자 비밀번호 변경", description = "사용자 비밀번호를 변경한다.")
+    @Operation(summary = "사용자 비밀번호 재설정", description = "사용자 비밀번호를 재설정한다.")
     @Parameters({
-        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID")
+        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID", schema = @Schema(type = "string"), required = true)
     })
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "사용자 비밀번호 변경 성공."),
@@ -95,19 +100,10 @@ class AccountController {
         @ApiResponse(responseCode = "401", description = "인증 실패, Access Token을 확인해주세요. 또는 현재 비밀번호를 확인해주세요.")
     })
     @PutMapping("/me/password")
-    public Mono<Void> changePassword(@RequestHeader("Authorization") String authorization, @RequestBody @Valid PasswordChangeRequest request) {
-        ChangePassword changePassword = new ChangePassword(request.getCurrentPassword(), request.getNewPassword());
-        return userService.changePassword(this.extractAccessToken(authorization), changePassword);
-    }
-
-    /**
-     * 인증 토큰 분리
-     *
-     * @param authorization
-     * @return
-     */
-    private String extractAccessToken(String authorization) {
-        return authorization.replace("Bearer ", "");
+    public Mono<Void> changePassword(@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid PasswordChangeRequest request) {
+        String username = jwt.getClaimAsString("cognito:username");
+        log.info("username: {}", username);
+        return userService.resetPassword(username, request.getResetPassword());
     }
 
     /**

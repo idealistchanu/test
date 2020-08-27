@@ -9,17 +9,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class UserConverter {
-    UserDocument converts(User user) {
-        UserDocument document = new UserDocument();
-        document.setEmail(user.getEmail());
-        document.setName(user.getName());
-        return document;
-    }
-
     User converts(UserDocument user) {
         return User.builder()
             .email(user.getEmail())
-            .sub(user.getSub())
             .name(user.getName())
             .phoneNumber(user.getPhoneNumber())
             .build();

@@ -46,7 +46,7 @@ public class UserController {
 
     @Operation(summary = "사용자 이메일 찾기", description = "가입된 사용자의 이메일을 찾는다.")
     @Parameters({
-        @Parameter(name = "username", description = "이름", in = ParameterIn.QUERY, example = "홍길동"),
+        @Parameter(name = "name", description = "이름", in = ParameterIn.QUERY, example = "홍길동"),
         @Parameter(name = "phoneNumber", description = "휴대 전화번호", in = ParameterIn.QUERY, example = "01012348765"),
         @Parameter(name = "code", description = "인증번호", in = ParameterIn.QUERY, example = "123456")
     })
@@ -57,15 +57,15 @@ public class UserController {
     })
     @GetMapping("/users/find")
     public Mono<UserFindResponse> find(
-        @RequestParam(name = "username") String username,
+        @RequestParam(name = "name") String name,
         @RequestParam(name = "phoneNumber") String phoneNumber,
         @RequestParam(name = "code") String code) {
-        log.info("[GET] /users/find?username={}&phoneNumber={}&code={}", username, phoneNumber, code);
+        log.info("[GET] /users/find?username={}&phoneNumber={}&code={}", name, phoneNumber, code);
         Verification verification = Verification.builder().checker(phoneNumber).verificationCode(code).build();
         return Mono
             .zip(
                 // 사용자 이메일 찾기
-                userService.find(username, phoneNumber),
+                userService.find(name, phoneNumber),
                 // 휴대폰 인증 확인 후, 인증 정보 삭제
                 verificationService.exists(verification)
                     .doOnNext(exists -> verificationService.remove(verification).subscribe())
@@ -86,16 +86,15 @@ public class UserController {
             content = @Content(schema = @Schema(implementation = ResponseMessage.class))),
         @ApiResponse(responseCode = "400", description = "비밀번호 재설정 실패, 가입한 이메일이 아닙니다. 또는 인증번호를 확인해주세요."),
     })
-    @PutMapping("/users/change-password")
-    public Mono<ResponseMessage> changePassword(
-        @RequestParam(name = "email") String email,
-        @RequestParam(name = "code") String code,
+    @PutMapping("/users/{email}/reset-password")
+    public Mono<ResponseMessage> resetPassword(
+        @PathVariable(name = "email") String email,
         @RequestBody PasswordResetRequest request) {
-        log.info("[GET] /users/change-password?email={}&code={} request: {}", email, code, request);
+        log.info("[GET] /users/{}/reset-password request: {}", email, request);
 
         Verification verification = Verification.builder()
             .checker(email)
-            .verificationCode(code)
+            .verificationCode(request.getCode())
             .build();
         // 이메일 인증 확인
         return verificationService.exists(verification)

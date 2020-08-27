@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @ToString
 public class Verification {
-    private String checker;
-    private String verificationCode;
-    private LocalDateTime createdDatetime;
+    private final String checker;
+    private final String verificationCode;
+    private final LocalDateTime createdDatetime;
 }

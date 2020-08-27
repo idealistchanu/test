@@ -39,11 +39,11 @@ class VerificationController {
         @ApiResponse(responseCode = "400", description = "인증번호 발송 실패, 휴대폰 번호를 입력하세요")
     })
     @PostMapping("/verifications/sms")
-    public Mono<VerificationResponse> sms(@RequestBody @Valid VerificationSmsRequest resource) {
-        log.info("[POST] /verifications/sms request: {}", resource.toString());
+    public Mono<VerificationResponse> sms(@RequestBody @Valid VerificationSmsRequest request) {
+        log.info("[POST] /verifications/sms request: {}", request.toString());
         return verificationService
             .add(Verification.builder()
-                .checker(resource.getPhoneNumber())
+                .checker(request.getPhoneNumber())
                 .verificationCode(String.format("%06d", new SecureRandom().nextInt(1000000)))
                 .build())
             //TODO SMS로 발신
@@ -58,11 +58,11 @@ class VerificationController {
         @ApiResponse(responseCode = "400", description = "인증번호 발송 실패, 이메일을 입력하세요")
     })
     @PostMapping("/verifications/email")
-    public Mono<VerificationResponse> email(@RequestBody @Valid VerificationEmailRequest resource) {
-        log.info("[POST] /verifications/email request: {}", resource.toString());
+    public Mono<VerificationResponse> email(@RequestBody @Valid VerificationEmailRequest request) {
+        log.info("[POST] /verifications/email request: {}", request.toString());
         return verificationService
             .add(Verification.builder()
-                .checker(resource.getEmail())
+                .checker(request.getEmail())
                 .verificationCode(String.format("%06d", new SecureRandom().nextInt(1000000)))
                 .build())
             //TODO Email로 발신
@@ -76,12 +76,12 @@ class VerificationController {
         @ApiResponse(responseCode = "400", description = "인증번호 확인 실패, 인증번호를 확인해주세요.")
     })
     @PostMapping("/verifications/confirm")
-    public Mono<ResponseMessage> checkVerification(@RequestBody @Valid VerificationCheckRequest resource) {
-        log.info("[POST] /verifications/confirm request: {}", resource.toString());
+    public Mono<ResponseMessage> checkVerification(@RequestBody @Valid VerificationCheckRequest request) {
+        log.info("[POST] /verifications/confirm request: {}", request.toString());
         return verificationService
             .exists(Verification.builder()
-                .checker(resource.getPhoneNumber())
-                .verificationCode(resource.getVerificationCode())
+                .checker(request.getPhoneNumber())
+                .verificationCode(request.getVerificationCode())
                 .build())
             .flatMap(exists -> Mono.just(makeResponse()));
     }
@@ -93,11 +93,11 @@ class VerificationController {
         @ApiResponse(responseCode = "400", description = "인증번호 확인 실패, 인증번호를 확인해주세요.")
     })
     @PostMapping("/verifications/check")
-    public Mono<ResponseMessage> checkVerificationWithRemove(@RequestBody @Valid VerificationCheckRequest resource) {
-        log.info("[POST] /verifications/check request: {}", resource.toString());
+    public Mono<ResponseMessage> checkVerificationWithRemove(@RequestBody @Valid VerificationCheckRequest request) {
+        log.info("[POST] /verifications/check request: {}", request.toString());
         Verification verification = Verification.builder()
-            .checker(resource.getPhoneNumber())
-            .verificationCode(resource.getVerificationCode())
+            .checker(request.getPhoneNumber())
+            .verificationCode(request.getVerificationCode())
             .build();
         return verificationService.exists(verification)
             .doOnNext(exists -> verificationService.remove(verification).subscribe())

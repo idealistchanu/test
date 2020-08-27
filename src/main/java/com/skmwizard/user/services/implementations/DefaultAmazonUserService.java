@@ -1,6 +1,5 @@
 package com.skmwizard.user.services.implementations;
 
-import com.skmwizard.user.services.ChangePassword;
 import com.skmwizard.user.services.Token;
 import com.skmwizard.user.services.User;
 import com.skmwizard.user.services.UserService;
@@ -46,18 +45,18 @@ class DefaultAmazonUserService implements UserService {
     }
 
     @Override
-    public Mono<User> find(String username, String phoneNumber) {
-        return userRepository.findByNameAndAndPhoneNumber(username, phoneNumber)
+    public Mono<User> find(String name, String phoneNumber) {
+        return userRepository.findByNameAndAndPhoneNumber(name, phoneNumber)
             .switchIfEmpty(Mono.error(new NoSuchObjectException(phoneNumber)))
             .map(userConverter::converts);
     }
 
     @Override
-    public Mono<Void> exists(String email) {
-        return userRepository.existsById(email)
+    public Mono<Void> exists(String username) {
+        return userRepository.existsById(username)
             .flatMap(exists -> {
                 if (exists.equals(Boolean.TRUE)) {
-                    return Mono.error(() -> new DuplicateKeyException(email));
+                    return Mono.error(() -> new DuplicateKeyException(username));
                 }
                 return Mono.empty();
             });
@@ -79,17 +78,19 @@ class DefaultAmazonUserService implements UserService {
             Mono.fromFuture(
                 providerClient.adminConfirmSignUp(
                     AdminConfirmSignUpRequest.builder()
-                        .username(user.getEmail())
+                        .username(response.userSub())
                         .userPoolId(userPoolId)
                         .build()))
         ).flatMap(response ->
             // DB에 사용자 등록
             userRepository.save(
                 new UserDocument(user.getEmail(),
-                    response.userSub(),
                     user.getName(),
                     user.getPhoneNumber(),
-                    LocalDateTime.now())
+                    LocalDateTime.now(),
+                    user.getEmail(),
+                    LocalDateTime.now(),
+                    user.getEmail())
             )
         ).then();
     }
@@ -104,21 +105,15 @@ class DefaultAmazonUserService implements UserService {
     }
 
     @Override
-    public Mono<Void> logout(String accessToken) {
+    public Mono<Void> logout(String username) {
         return Mono.fromFuture(
-            providerClient.globalSignOut(
-                GlobalSignOutRequest.builder()
-                    .accessToken(accessToken)
+            providerClient.adminUserGlobalSignOut(
+                AdminUserGlobalSignOutRequest.builder()
+                    .username(username)
+                    .userPoolId(userPoolId)
                     .build()
             )
         ).then();
-    }
-
-    @Override
-    public Mono<User> getUserInfo(String accessToken) {
-        log.info("getUserInfo {}", accessToken);
-        return userInfo(accessToken)
-            .flatMap(user -> this.get(user.getEmail()));
     }
 
     @Override
@@ -130,46 +125,41 @@ class DefaultAmazonUserService implements UserService {
     }
 
     @Override
-    public Mono<User> updateUserInfo(String accessToken, User user) {
+    public Mono<User> updateUserInfo(String username, User user) {
         return Mono.zip(
-            Mono.fromFuture(providerClient.updateUserAttributes(
-                UpdateUserAttributesRequest.builder()
-                    .accessToken(accessToken)
+            Mono.fromFuture(providerClient.adminUpdateUserAttributes(
+                AdminUpdateUserAttributesRequest.builder()
+                    .userPoolId(userPoolId)
+                    .username(username)
                     .userAttributes(
                         AttributeType.builder()
                             .name("name").value(user.getName())
                             .build())
                     .build()
             )),
-            this.get(user.getEmail())
-                .map(edit -> userRepository.save(userConverter.converts(user)))
-        ).flatMap(aVoid -> userRepository.findById(user.getEmail()).map(userConverter::converts));
+            userRepository.findById(username)
+                .switchIfEmpty(Mono.error(new NoSuchElementException(user.getEmail())))
+                .flatMap(userDocument -> {
+                    userDocument.setName(user.getName());
+                    userDocument.setPhoneNumber(user.getPhoneNumber());
+                    userDocument.setUpdatedDatetime(LocalDateTime.now());
+                    userDocument.setUpdater(username);
+                    return userRepository.save(userDocument);
+                })
+        ).flatMap(aVoid -> userRepository.findById(username).map(userConverter::converts));
     }
 
     @Override
-    public Mono<Void> changePassword(String accessToken, ChangePassword changePassword) {
-        return Mono.just(
-            providerClient.changePassword(
-                ChangePasswordRequest.builder()
-                    .accessToken(accessToken)
-                    .previousPassword(changePassword.getOldPassword())
-                    .proposedPassword(changePassword.getNewPassword())
-                    .build()
-            ).join()
-        ).then();
-    }
-
-    @Override
-    public Mono<Void> resetPassword(String email, String resetPassword) {
+    public Mono<Void> resetPassword(String username, String resetPassword) {
         Map<String, String> auth = new ConcurrentHashMap<>();
-        auth.put("USERNAME", email);
+        auth.put("USERNAME", username);
         auth.put("NEW_PASSWORD", resetPassword);
 
         return Mono.fromFuture(
             providerClient.adminSetUserPassword(
                 AdminSetUserPasswordRequest.builder()
                     .userPoolId(userPoolId)
-                    .username(email)
+                    .username(username)
                     .permanent(true)
                     .password(resetPassword)
                     .build()
@@ -209,20 +199,5 @@ class DefaultAmazonUserService implements UserService {
                     .build()
             )
         ).map(response -> converter.converts(response.authenticationResult()));
-    }
-
-    /**
-     * 사용자 정보 요청
-     *
-     * @param accessToken 토큰
-     * @return 사용자 정보
-     */
-    private Mono<User> userInfo(String accessToken) {
-        return Mono.fromFuture(
-            providerClient.getUser(
-                GetUserRequest.builder()
-                    .accessToken(accessToken)
-                    .build())
-        ).map(response -> converter.converts(response.userAttributes()));
     }
 }

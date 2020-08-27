@@ -8,7 +8,6 @@ import lombok.ToString;
 @Setter
 @ToString
 class TokenResponse {
-    private String idToken;
     private String accessToken;
     private String refreshToken;
     private Integer expiresIn;

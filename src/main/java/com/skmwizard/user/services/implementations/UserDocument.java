@@ -19,11 +19,15 @@ class UserDocument {
     @Id
     private String email;
 
-    private String sub;
-
     private String name;
 
     private String phoneNumber;
 
     private LocalDateTime createdDatetime;
+
+    private String creator;
+
+    private LocalDateTime updatedDatetime;
+
+    private String updater;
 }

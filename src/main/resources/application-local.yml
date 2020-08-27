@@ -15,6 +15,12 @@ spring:
       database: user
       authentication-database: admin
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_zI7QoQpeJ/.well-known/jwks.json
+
 aws:
   region: ap-northeast-2
   accessKeyId: AKIA3G2RCBQUONBUF6N7
