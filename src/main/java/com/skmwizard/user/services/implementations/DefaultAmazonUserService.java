@@ -46,7 +46,7 @@ class DefaultAmazonUserService implements UserService {
 
     @Override
     public Mono<User> find(String name, String phoneNumber) {
-        return userRepository.findByNameAndAndPhoneNumber(name, phoneNumber)
+        return userRepository.findByNameAndPhoneNumber(name, phoneNumber)
             .switchIfEmpty(Mono.error(new NoSuchObjectException(phoneNumber)))
             .map(userConverter::converts);
     }
