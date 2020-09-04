@@ -57,7 +57,7 @@ class AuthenticationController {
     @GetMapping("/logout")
     public Mono<Void> logout(@AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("cognito:username");
-        log.info("[POST] /logout");
+        log.info("[GET] /logout");
         return userService.logout(username);
     }
 

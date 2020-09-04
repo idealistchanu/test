@@ -25,6 +25,7 @@ public class ResourceServerConfiguration {
                     .pathMatchers("/verifications/sms", "/verifications/email", "/verifications/confirm", "/verifications/check").permitAll()
                     .anyExchange().authenticated()
             )
+            .logout().logoutUrl("/admin/logout").and()
             .oauth2ResourceServer((oauth2ResourceServer) ->
                 oauth2ResourceServer
                     .jwt(withDefaults())
