@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
 @Setter
 @Getter
@@ -17,6 +18,7 @@ import javax.validation.constraints.NotBlank;
 class LoginRequest {
     @Schema(title = "이메일", example = "user_id@gmail.com", required = true)
     @NotBlank(message = "이메일을 입력하세요")
+    @Pattern(regexp = "^[a-z0-9._%+-]+@[a-z0-9]+.[a-z]{2,6}$", flags = Pattern.Flag.CASE_INSENSITIVE, message = "이메일 형식이 아닙니다")
     private String email;
 
     @Schema(title = "비밀번호", example = "8자 이상의 영문/숫자/특수기호 중 2개 이상 조합", required = true)

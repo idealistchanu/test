@@ -14,7 +14,7 @@ public class SpringDocConfiguration {
         return GroupedOpenApi.builder()
             .group("account")
             .packagesToScan("com.skmwizard.user.apis")
-            .pathsToMatch("/signup", "/me", "/me/**", "/users/**/check", "/users/**/find", "/users/**/reset-password")
+            .pathsToMatch("/signup", "/me", "/me/**", "/users/check", "/users/find", "/users/reset-password")
             .build();
     }
 

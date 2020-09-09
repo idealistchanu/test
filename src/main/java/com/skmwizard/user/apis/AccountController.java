@@ -107,15 +107,16 @@ class AccountController {
 
     @Operation(summary = "사용자 중복 확인", description = "사용자 중복 확인한다.")
     @Parameters({
-        @Parameter(name = "email", description = "이메일", in = ParameterIn.PATH, example = "user_id@gmail.com")
+        @Parameter(name = "email", description = "이메일", in = ParameterIn.QUERY, example = "user_id@gmail.com")
     })
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "사용 중복 확인 성공, 사용 가능한 이메일입니다."),
         @ApiResponse(responseCode = "409", description = "사용자 중복 확인 실패, 이미 가입된 이메일입니다.")
     })
-    @GetMapping("/users/{email}/check")
-    public Mono<Void> check(@PathVariable("email") String email) {
-        log.info("[GET] /users/{}/check", email);
+    @GetMapping("/users/check")
+    public Mono<Void> check(@RequestParam(name = "email") String email) {
+        log.info("[GET] /users/check?email={}", email);
+        // TODO 이메일 형식을 확인 필요
         return userService.exists(email);
     }
 
@@ -152,32 +153,27 @@ class AccountController {
     }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 재설정한다.")
-    @Parameters({
-        @Parameter(name = "email", description = "이메일", in = ParameterIn.QUERY, example = "user_id@gmail.com"),
-        @Parameter(name = "code", description = "인증번호", in = ParameterIn.QUERY, example = "123456")
-    })
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "비밀번호 재설정 성공, 비밀번호 재설정 성공 정보를 반환한다.",
             content = @Content(schema = @Schema(implementation = ResponseMessage.class))),
         @ApiResponse(responseCode = "400", description = "비밀번호 재설정 실패, 가입한 이메일이 아닙니다. 또는 인증번호를 확인해주세요."),
     })
-    @PutMapping("/users/{email}/reset-password")
+    @PutMapping("/users/reset-password")
     public Mono<ResponseMessage> resetPassword(
-        @PathVariable(name = "email") String email,
         @RequestBody PasswordResetRequest request) {
-        log.info("[GET] /users/{}/reset-password request: {}", email, request);
+        log.info("[GET] /users/reset-password request: {}", request);
 
         Verification verification = Verification.builder()
-            .checker(email)
+            .checker(request.getEmail())
             .verificationCode(request.getCode())
             .build();
         // 이메일 인증 확인
         return verificationService.exists(verification)
             .doOnNext(exists ->
                 // 사용자 이메일이 있으면, 해당 비밀번호 재설정
-                userService.get(email)
+                userService.get(request.getEmail())
                     .doOnSuccess(user ->
-                        userService.resetPassword(email, request.getResetPassword()).subscribe())
+                        userService.resetPassword(request.getEmail(), request.getResetPassword()).subscribe())
                     .subscribe()
             )
             // 이메일 인증 확인 후, 인증 정보 삭제
