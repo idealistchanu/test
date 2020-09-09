@@ -21,6 +21,7 @@ public class ResourceServerConfiguration {
                     .pathMatchers("/login").permitAll()
                     .pathMatchers("/token/refresh").permitAll()
                     .pathMatchers("/users/find").permitAll()
+                    .pathMatchers("/users/**/check").permitAll()
                     .pathMatchers("/users/**/reset-password").permitAll()
                     .pathMatchers("/verifications/sms", "/verifications/email", "/verifications/confirm", "/verifications/check").permitAll()
                     .anyExchange().authenticated()
