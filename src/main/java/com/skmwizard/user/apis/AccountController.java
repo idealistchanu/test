@@ -1,5 +1,8 @@
 package com.skmwizard.user.apis;
 
+import com.google.gson.Gson;
+import com.skmwizard.user.messages.PublishableEvent;
+import com.skmwizard.user.messages.activemq.MqttActiveMqPublisher;
 import com.skmwizard.user.services.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,11 +30,14 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 @Slf4j
 class AccountController {
+    private final AccountService accountService;
     private final UserService userService;
+    private final VerificationService verificationService;
     private final AgreeReceiveService agreeReceiveService;
     private final UserResourceConverter userResourceConverter;
     private final AgreeReceiveResourceConverter agreeReceiveConverter;
-    private final VerificationService verificationService;
+    private final MqttActiveMqPublisher messagePublisher;
+    private final Gson gson = new Gson();
 
     @Operation(summary = "사용자 등록", description = "사용자를 동록한다.")
     @ApiResponses({
@@ -42,16 +48,18 @@ class AccountController {
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Mono<Void> register(@RequestBody @Valid UserRequest userRequest) {
-        return Mono.when(
-            // 사용자 등록 (Cognito, NoSQL)
-            userService.signUp(userResourceConverter.converts(userRequest)),
-            // 수신 동의 등록
-            Flux.fromIterable(userRequest.getAgreeList())
-                .doOnNext(agree ->
-                    agreeReceiveService.add(userRequest.getEmail(), agreeReceiveConverter.converts(agree))
-                        .subscribe()
-                )
-        ).then();
+        return accountService.exists(userRequest.getEmail()) // 사용자 이메일 중복 체크
+            .flatMap(exists ->
+                accountService.signUp(userResourceConverter.converts(userRequest)) // 사용자 등록 (Cognito, NoSQL)
+                    .doOnSuccess(user -> {
+                        Flux.fromIterable(userRequest.getAgreeList())
+                            .subscribe(agree -> agreeReceiveService.add(userRequest.getEmail(), agreeReceiveConverter.converts(agree)).subscribe()); // 수신 동의 등록
+                        // 회원 가입 정보 발행
+                        userRequest.setPassword(null); // 보안을 위해 비밀번호는 발행하지 않음
+                        String jsonString = gson.toJson(userRequest);
+                        messagePublisher.publish(PublishableEvent.USER_CREATED, null, jsonString);
+                    })
+            ).then();
     }
 
     @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회한다.")
@@ -85,8 +93,52 @@ class AccountController {
     public Mono<UserResponse> editUserInfo(@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid UserUpdateRequest request) {
         String username = jwt.getClaimAsString("email");
         log.info("username: {}, userResource: {}", username, request);
-        return userService.updateUserInfo(username, userResourceConverter.converts(request))
+        return accountService.updateUserInfo(username, userResourceConverter.converts(request))
             .map(userResourceConverter::converts);
+    }
+
+    @Operation(summary = "사용자 탈퇴", description = "사용자 탈퇴한다.")
+    @Parameters({
+        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID", schema = @Schema(type = "string"), required = true)
+    })
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "사용자 탈퇴 성공",
+            content = @Content(schema = @Schema(implementation = UserResponse.class))),
+        @ApiResponse(responseCode = "401", description = "인증 실패, Access Token을 확인해주세요."),
+        @ApiResponse(responseCode = "404", description = "사용자 탈퇴 실패, 이미 탈퇴한 사용자입니다, 확인해주세요.")
+    })
+    @DeleteMapping("/me")
+    public Mono<Void> withdrawal(@AuthenticationPrincipal Jwt jwt) {
+        String username = jwt.getClaimAsString("email");
+        log.info("username: {}", username);
+        return userService.remove(username)
+            .doOnSuccess(aVoid -> messagePublisher.publish(PublishableEvent.USER_DELETED, username, new Gson().toJson(User.builder().email(username).build())))
+            .then();
+    }
+
+    @Operation(summary = "사진 변경", description = "사진를 변경한다.")
+    @Parameters({
+        @Parameter(name = "Authorization", description = "인증 토큰", in = ParameterIn.HEADER, example = "Authorization Bearer INVALID", schema = @Schema(type = "string"), required = true)
+    })
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "사진 변경 성공, 사진 변경 성공 정보를 반환한다.",
+            content = @Content(schema = @Schema(implementation = ResponseMessage.class))),
+        @ApiResponse(responseCode = "400", description = "사진 변경 실패, 가입한 아이디가 아닙니다.")
+    })
+    @PutMapping("/me/picture")
+    public Mono<ResponseMessage> changePicture(@AuthenticationPrincipal Jwt jwt, @RequestBody PictureChangeRequest request) {
+        String username = jwt.getClaimAsString("email");
+        log.info("[GET] /me/picture request: {}", request);
+
+        return userService.get(username)
+            .doOnNext(user ->
+                accountService.changePicture(username, request.getPicture()).subscribe()
+            ).map(exists -> {
+                ResponseMessage response = new ResponseMessage();
+                response.setMessage("picture change is complete.");
+                response.setStatusCode(HttpStatus.OK.value());
+                return response;
+            });
     }
 
     @Operation(summary = "사용자 비밀번호 재설정", description = "사용자 비밀번호를 재설정한다.")
@@ -102,7 +154,7 @@ class AccountController {
     public Mono<Void> changePassword(@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid PasswordChangeRequest request) {
         String username = jwt.getClaimAsString("cognito:username");
         log.info("username: {}", username);
-        return userService.resetPassword(username, request.getResetPassword());
+        return accountService.resetPassword(username, request.getResetPassword());
     }
 
     @Operation(summary = "사용자 중복 확인", description = "사용자 중복 확인한다.")
@@ -117,7 +169,7 @@ class AccountController {
     public Mono<Void> check(@RequestParam(name = "email") String email) {
         log.info("[GET] /users/check?email={}", email);
         // TODO 이메일 형식을 확인 필요
-        return userService.exists(email);
+        return accountService.exists(email);
     }
 
     @Operation(summary = "사용자 이메일 찾기", description = "가입된 사용자의 이메일을 찾는다.")
@@ -141,10 +193,10 @@ class AccountController {
         return Mono
             .zip(
                 // 사용자 이메일 찾기
-                userService.find(name, phoneNumber),
+                accountService.find(name, phoneNumber),
                 // 휴대폰 인증 확인 후, 인증 정보 삭제
                 verificationService.exists(verification)
-                    .doOnNext(exists -> verificationService.remove(verification).subscribe())
+                    .doOnSuccess(exists -> verificationService.remove(verification).subscribe())
             ).flatMap(objects -> {
                 UserFindResponse response = new UserFindResponse();
                 response.setEmail(objects.getT1().getEmail());
@@ -159,8 +211,7 @@ class AccountController {
         @ApiResponse(responseCode = "400", description = "비밀번호 재설정 실패, 가입한 이메일이 아닙니다. 또는 인증번호를 확인해주세요."),
     })
     @PutMapping("/users/reset-password")
-    public Mono<ResponseMessage> resetPassword(
-        @RequestBody PasswordResetRequest request) {
+    public Mono<ResponseMessage> resetPassword(@RequestBody PasswordResetRequest request) {
         log.info("[GET] /users/reset-password request: {}", request);
 
         Verification verification = Verification.builder()
@@ -173,7 +224,7 @@ class AccountController {
                 // 사용자 이메일이 있으면, 해당 비밀번호 재설정
                 userService.get(request.getEmail())
                     .doOnSuccess(user ->
-                        userService.resetPassword(request.getEmail(), request.getResetPassword()).subscribe())
+                        accountService.resetPassword(request.getEmail(), request.getResetPassword()).subscribe())
                     .subscribe()
             )
             // 이메일 인증 확인 후, 인증 정보 삭제

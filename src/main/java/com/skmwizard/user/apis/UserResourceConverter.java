@@ -9,6 +9,7 @@ class UserResourceConverter {
         UserResponse resource = new UserResponse();
         resource.setEmail(user.getEmail());
         resource.setName(user.getName());
+        resource.setPicture(user.getPicture());
         resource.setPhoneNumber(user.getPhoneNumber());
         return resource;
     }
@@ -19,7 +20,6 @@ class UserResourceConverter {
             .name(resource.getName())
             .password(resource.getPassword())
             .phoneNumber(resource.getPhoneNumber())
-            .status(resource.getStatus())
             .build();
     }
 
@@ -27,7 +27,14 @@ class UserResourceConverter {
         return User.builder()
             .name(resource.getName())
             .phoneNumber(resource.getPhoneNumber())
-            .status(resource.getStatus())
+            .build();
+    }
+
+    User converts(String username, UserUpdateRequest resource) {
+        return User.builder()
+            .email(username)
+            .name(resource.getName())
+            .phoneNumber(resource.getPhoneNumber())
             .build();
     }
 }

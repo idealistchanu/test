@@ -1,7 +1,7 @@
 package com.skmwizard.user.apis;
 
 import com.skmwizard.user.services.User;
-import com.skmwizard.user.services.UserService;
+import com.skmwizard.user.services.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -25,7 +25,7 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 @Slf4j
 class AuthenticationController {
-    private final UserService userService;
+    private final AccountService accountService;
     private final TokenResourceConverter converter;
 
     @Operation(summary = "로그인", description = "로그인 한다.")
@@ -37,7 +37,7 @@ class AuthenticationController {
     @PostMapping("/login")
     public Mono<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
         log.info("[POST] /login email {}", loginRequest.getEmail());
-        return userService
+        return accountService
             .login(
                 User.builder()
                     .email(loginRequest.getEmail())
@@ -58,7 +58,7 @@ class AuthenticationController {
     public Mono<Void> logout(@AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("cognito:username");
         log.info("[GET] /logout");
-        return userService.logout(username);
+        return accountService.logout(username);
     }
 
     @Operation(summary = "토큰 갱신", description = "토큰을 갱신한다.")
@@ -70,7 +70,7 @@ class AuthenticationController {
     @PostMapping("/token/refresh")
     public Mono<TokenResponse> refreshToken(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) {
         log.info("[POST] /token/refresh");
-        return userService
+        return accountService
             .refreshToken(
                 refreshTokenRequest.getRefreshToken())
             .map(converter::converts);

@@ -25,6 +25,26 @@
       "name": "aws.cognito.webclient.clientId",
       "type": "java.lang.String",
       "description": "AWS Cognito의 클라이언트 식별 정보."
+    },
+    {
+      "name": "activemq.endpoint",
+      "type": "java.lang.String",
+      "description": "Active MQ Endpoint"
+    },
+    {
+      "name": "activemq.username",
+      "type": "java.lang.String",
+      "description": "Active MQ Username"
+    },
+    {
+      "name": "activemq.password",
+      "type": "java.lang.String",
+      "description": "Active MQ Password"
+    },
+    {
+      "name": "activemq.client.id",
+      "type": "java.lang.String",
+      "description": "Active MQ Client ID"
     }
   ]
 }

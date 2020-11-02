@@ -28,6 +28,4 @@ class UserUpdateRequest {
 
     @Schema(title = "수신 동의", example = "[\"SMS\", \"EMAIL\"]")
     private Set<String> agreeList;
-
-    private String status;
 }

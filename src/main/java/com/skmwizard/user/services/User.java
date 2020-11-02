@@ -8,9 +8,9 @@ import lombok.ToString;
 @ToString
 @Builder
 public class User {
-    private final String name;
     private final String email;
+    private final String picture;
+    private final String name;
     private final String password;
     private final String phoneNumber;
-    private final String status;
 }

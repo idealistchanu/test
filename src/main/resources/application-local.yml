@@ -30,6 +30,13 @@ aws:
     webclient:
       clientId: 15mhttfj4hsqd5oibc2dkcpso9
 
+activemq:
+  endpoint: ssl://b-68d2a44a-83f7-4767-8aee-38411988a5e7-1.mq.ap-northeast-2.amazonaws.com:8883
+  username: skmagic-iot
+  password: skmwizard250!
+  client:
+    id: device-message-client
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

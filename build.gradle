@@ -32,6 +32,8 @@ ext {
 //    set("springCloudVersion", "Greenwich.SR2")
     awsSDKVersion = "2.13.61"
     springdocVersion = "1.4.3"
+    pahoMQTTVersion = "1.2.4"
+    gsonVersion = "2.8.6"
 }
 
 dependencies {
@@ -45,7 +47,9 @@ dependencies {
     implementation platform("software.amazon.awssdk:bom:${awsSDKVersion}")
     implementation("software.amazon.awssdk:cognitoidentityprovider")
     implementation("software.amazon.awssdk:netty-nio-client")
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:${pahoMQTTVersion}")
     implementation("org.springdoc:springdoc-openapi-webflux-ui:${springdocVersion}")
+    implementation ("com.google.code.gson:gson:${gsonVersion}")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 //    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

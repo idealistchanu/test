@@ -18,7 +18,7 @@ import java.util.Set;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class UserRequest {
+class  UserRequest {
     @Schema(title = "이메일", example = "user_id@gmail.com", required = true)
     @NotBlank(message = "이메일을 입력하세요")
     @Pattern(regexp = "^[a-z0-9._%+-]+@[a-z0-9]+.[a-z]{2,6}$", flags = Pattern.Flag.CASE_INSENSITIVE)
@@ -38,6 +38,4 @@ class UserRequest {
 
     @Schema(title = "수신 동의", example = "[\"SMS\", \"EMAIL\"]")
     private Set<String> agreeList;
-
-    private String status;
 }
