@@ -169,7 +169,7 @@ class AccountController {
     public Mono<Void> check(@RequestParam(name = "email") String email) {
         log.info("[GET] /users/check?email={}", email);
         // TODO 이메일 형식을 확인 필요
-        return accountService.exists(email);
+        return accountService.exists(email).then();
     }
 
     @Operation(summary = "사용자 이메일 찾기", description = "가입된 사용자의 이메일을 찾는다.")

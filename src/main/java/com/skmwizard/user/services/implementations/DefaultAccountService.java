@@ -39,13 +39,13 @@ class DefaultAccountService implements AccountService {
     }
 
     @Override
-    public Mono<Void> exists(String username) {
+    public Mono<Boolean> exists(String username) {
         return userRepository.existsById(username)
             .flatMap(exists -> {
                 if (exists.equals(Boolean.TRUE)) {
                     return Mono.error(() -> new DuplicateKeyException(username));
                 }
-                return Mono.empty();
+                return Mono.just(exists);
             });
     }
 

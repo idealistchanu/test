@@ -18,7 +18,7 @@ public interface AccountService {
      *
      * @param username 아이디
      */
-    Mono<Void> exists(String username);
+    Mono<Boolean> exists(String username);
 
     /**
      * 사용자 회원가입
